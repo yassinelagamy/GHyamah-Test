@@ -25,10 +25,24 @@ q1-deploy-monitor/
 
 | Method | Path | Response |
 |---|---|---|
-| `GET` | `/` | service name, version, endpoint list, start time |
-| `GET` | `/health` | `{"status":"ok","uptime_s":12.34,"timestamp":"2026-07-26T15:36:50.283265+00:00"}` — HTTP 200 |
+| `GET` | `/` | service name, version, `release`, endpoint list, start time |
+| `GET` | `/health` | `{"status":"ok","release":"<git-commit-sha>","uptime_s":12.34,"timestamp":"2026-07-26T20:46:06.847603+00:00"}` — HTTP 200 |
 | `GET` | `/metrics` | `{"requests_total":42,"started_at":"<iso8601>"}` |
 | `GET` | `/docs` | interactive OpenAPI docs (FastAPI built-in) |
+
+Example `/` response:
+
+```json
+{
+  "service": "ghaymah-api",
+  "version": "1.0.0",
+  "release": "60b9e2c38e3f1a509383c6d61a7f76b9d043214a",
+  "message": "Ghaymah deployment demo API",
+  "endpoints": ["/", "/health", "/metrics", "/docs"],
+  "started_at": "2026-07-26T20:46:03.315313+00:00",
+  "timestamp": "2026-07-26T20:52:18.907569+00:00"
+}
+```
 
 `/health` performs **no** downstream checks (no DB, no network) — it reports
 process liveness only, so a failing check always means "restart me", which is
@@ -135,7 +149,7 @@ anonymously from the URL you paste in.
 Then click **Deploy**. Once the deployment reports as running, Ghaymah assigns the
 service a public URL.
 
-### 3.3 Verify the live deployment
+### 3.3 Verify the deployment
 
 ```bash
 curl -f https://ghaymah-api-615e99f13665.hosted.ghaymah.systems/health
@@ -172,6 +186,21 @@ $env:APP_URL="https://ghaymah-api-615e99f13665.hosted.ghaymah.systems"; python q
 Every 30 seconds it issues `GET $APP_URL/health` with a 5 s timeout, then
 `GET $APP_URL/metrics`, and appends one record to `monitor/data/checks.json`
 (a JSON array, created on first run):
+
+The current `/health` response shape is:
+
+```json
+{
+  "status": "ok",
+  "release": "60b9e2c38e3f1a509383c6d61a7f76b9d043214a",
+  "uptime_s": 3.532,
+  "timestamp": "2026-07-26T20:46:06.847603+00:00"
+}
+```
+
+The monitor converts that response into the following derived history record.
+It intentionally stores status, HTTP code, latency, and request count rather
+than duplicating every response field:
 
 ```json
 {
@@ -257,7 +286,7 @@ const DATA_URL = '../monitor/data/checks.json';
 | Check | Result |
 |---|---|
 | `pip install -r requirements.txt` (pinned versions) | fastapi 0.115.6, uvicorn 0.34.0 installed cleanly |
-| `GET /health` | HTTP 200 · `{"status":"ok","uptime_s":7.797,"timestamp":"..."}` |
+| `GET /health` | HTTP 200 · `{"status":"ok","release":"local","uptime_s":7.797,"timestamp":"..."}` |
 | `GET /` and `GET /metrics` | valid JSON; `requests_total` increments per request |
 | `monitor.py --once` against the running app | `UP code=200 latency=45.8ms requests=5`, exit 0 |
 | `monitor.py` loop across an app shutdown | up records → down records → `ALERT` printed on the 3rd consecutive failure |
@@ -266,9 +295,9 @@ const DATA_URL = '../monitor/data/checks.json';
 | `docker build` | image builds clean (249 MB) |
 | `docker run` | container reports `(healthy)` via the `HEALTHCHECK`; all three endpoints respond |
 
-### Against the live Ghaymah deployment
+### Against the Ghaymah deployment
 
-Final release checked on 2026-07-26 at 18:48 UTC:
+Final release checked on 2026-07-26 at 20:46:07 UTC:
 
 | Endpoint | Result |
 |---|---|
@@ -276,7 +305,11 @@ Final release checked on 2026-07-26 at 18:48 UTC:
 | `/` | Service metadata and the same immutable release identifier |
 | `/metrics` | Valid request counter and process start time; the counter reflects real monitor traffic |
 
-The monitor polls the live URL every 30 seconds. The committed
-`monitor/data/checks.json` is a submission snapshot; ongoing checks continue in
-the `ghaymah-q1-monitor-history` Docker volume so normal monitoring does not
-dirty the repository.
+After the endpoint returned HTTP 200 at 2026-07-26 20:46:07 UTC, the monitor was
+started with `DATA_FILE=/data/checks.json`, where `/data` is a read-write bind to
+the repository's `monitor/data` directory. Its `/monitor` code bind remains
+read-only. This lets atomic JSON updates append directly to the submitted
+history without allowing the container to alter its monitor source code. The
+older `ghaymah-q1-monitor-history` volume is deliberately not copied into the
+repository because it contains checks made while the free-tier service was
+hibernated.

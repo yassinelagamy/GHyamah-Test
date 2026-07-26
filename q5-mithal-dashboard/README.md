@@ -1,7 +1,7 @@
 # Q5 — Monitoring dashboard for mithal.space
 
 A single container that continuously measures the availability and performance of
-**https://mithal.space** and serves a live dashboard of the results on port 8080.
+**https://mithal.space** and serves a monitoring dashboard of the results on port 8080.
 
 ```
 q5-mithal-dashboard/
@@ -188,7 +188,7 @@ Then, in the Ghaymah dashboard:
 | Environment Variables | *(optional)* `INTERVAL_S=60`, `TARGET_URL=https://mithal.space`, `SEARCH_URL=https://mithal.space/search?q=test` |
 
 Click **Deploy**, then open `https://mithal-monitor-292f00f076b1.hosted.ghaymah.systems/index.html` and
-screenshot the live dashboard. Leave it running so the 24 h uptime tile and the
+screenshot the deployed dashboard. Leave it running so the 24 h uptime tile and the
 hourly chart fill with real history before submission.
 
 ---
@@ -207,7 +207,7 @@ Measured against the live site on 2026-07-26:
 | `docker build` | image builds clean (200 MB) |
 | `docker run` | `start.sh` launches the collector and the static server; container reports `(healthy)`; the collector wrote records into the served directory and the dashboard rendered them |
 
-### Against the live Ghaymah deployment
+### Against the Ghaymah deployment
 
 Checked on 2026-07-26 at 17:23 UTC, ~30 minutes after deployment:
 
@@ -223,3 +223,17 @@ storage or second service involved.
 
 The `dashboard/data/metrics.json` in this repo holds those first real samples; the
 collector prunes anything older than 48 h automatically.
+
+### Post-hibernation collection
+
+The application was woken for final submission verification. `/index.html`
+returned HTTP 200 at **2026-07-26 20:46:07 UTC**. The collector's new
+in-container history began at **2026-07-26 20:45:34.818046 UTC** and grew from
+3 to 4 records by **2026-07-26 20:48:44 UTC**, confirming the one-record-per-minute
+loop resumed.
+
+This history restarted at wake time because `/app/dashboard/data/metrics.json`
+is on the container's ephemeral filesystem, not an attached volume. Hibernation
+and restart therefore demonstrate the persistence boundary described in Q4:
+production history that must survive container replacement belongs on Ghaymah
+Block Storage or another external durable store.

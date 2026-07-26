@@ -8,13 +8,16 @@ monitoring dashboard.
 
 | Question | Deliverable | Status |
 |---|---|---|
-| Q1 — Deploy and monitor an API | [Application, monitor, dashboard, and deployment guide](q1-deploy-monitor/README.md) | Live |
+| Q1 — Deploy and monitor an API | [Application, monitor, dashboard, and deployment guide](q1-deploy-monitor/README.md) | HTTP 200 verified 2026-07-26 20:46:07 UTC |
 | Q2 — OOMKilled postmortem | [Professional blameless postmortem](q2-postmortem/POSTMORTEM.md) | Complete |
 | Q3 — CI/CD pipeline | [Workflow](.github/workflows/deploy.yml) and [documentation](q3-cicd/CICD.md) | Complete |
 | Q4 — Scalability | [Architecture, capacity calculation, cold starts, and storage](q4-scalability/SCALABILITY.md) | Complete |
-| Q5 — `mithal.space` monitoring | [Collector and dashboard](q5-mithal-dashboard/) | Live |
+| Q5 — `mithal.space` monitoring | [Collector and dashboard](q5-mithal-dashboard/) | HTTP 200 verified 2026-07-26 20:46:07 UTC |
 
-## Live services
+## Service endpoints
+
+Both application endpoints returned HTTP 200 in a fresh check at
+**2026-07-26 20:46:07 UTC**:
 
 - Q1 API: <https://ghaymah-api-615e99f13665.hosted.ghaymah.systems>
 - Q1 health: <https://ghaymah-api-615e99f13665.hosted.ghaymah.systems/health>
@@ -35,7 +38,7 @@ The curated evidence set is documented in
 |---|---|
 | Ghaymah project and applications | [Project](docs/evidence/screenshots/01-ghaymah-project.png) |
 | Q1 API service | [Q1 service](docs/evidence/screenshots/02-q1-service.png) |
-| Q1 live health response | [Q1 health](docs/evidence/screenshots/03-q1-health.png) |
+| Q1 health response recorded 2026-07-26 18:48:19 UTC | [Q1 health](docs/evidence/screenshots/03-q1-health.png) |
 | Q1 monitoring dashboard | [Q1 dashboard](docs/evidence/screenshots/04-q1-dashboard.png) |
 | Q5 Ghaymah service | [Q5 service](docs/evidence/screenshots/05-q5-service.png) |
 | Q5 monitoring dashboard | [Q5 dashboard](docs/evidence/screenshots/06-q5-dashboard.png) |
@@ -52,7 +55,7 @@ The workflow:
 4. Starts the immutable image in an ephemeral staging container.
 5. Requires `status=ok` and the expected SHA from `/health`.
 6. Pauses for the required reviewer on the GitHub `production` Environment.
-7. Verifies that the live Ghaymah application serves the approved SHA.
+7. Verifies that the deployed Ghaymah application serves the approved SHA.
 
 Ghaymah CLI `0.0.24` documents interactive email/password login but does not
 publish API-token authentication or the external-image field for
@@ -62,7 +65,17 @@ workflow does not report a stale or unverified deployment as successful.
 
 The account's five-resource free-plan limit prevents a third persistent Ghaymah
 application, so staging runs as an isolated ephemeral container on the Actions
-runner. Production and the Q5 dashboard remain live on Ghaymah.
+runner. Production and the Q5 dashboard both returned HTTP 200 at
+2026-07-26 20:46:07 UTC.
+
+## Free-tier hibernation policy
+
+Both applications run on the Ghaymah free tier. They may be put into
+**Hibernate** in the Ghaymah dashboard when the assessment is not being reviewed
+to conserve container credits; hibernated public URLs return HTTP 503. Before
+submission or review, open each application and select **Wake Up**, then verify
+both public endpoints and record the UTC check time. Hibernation preserves the
+deployment configuration but stops the Q5 in-container collector.
 
 ## Verified platform information
 

@@ -8,7 +8,7 @@ duplicate captures are not included.
 |---:|---|---|
 | 01 | `01-ghaymah-project.png` | Authenticated Ghaymah project and deployed applications. |
 | 02 | `02-q1-service.png` | Q1 API application in Ghaymah. |
-| 03 | `03-q1-health.png` | Live HTTP 200 health response with release identifier. |
+| 03 | `03-q1-health.png` | HTTP 200 health response with release identifier, recorded 2026-07-26 18:48:19 UTC. |
 | 04 | `04-q1-dashboard.png` | Q1 status, latency, request count, uptime, and history. |
 | 05 | `05-q5-service.png` | Q5 monitoring application in Ghaymah. |
 | 06 | `06-q5-dashboard.png` | Q5 uptime, latency chart, SSL, DNS/search metrics, and recent checks. |
@@ -17,6 +17,11 @@ duplicate captures are not included.
 
 `health-response.html` records the URL, UTC check time, HTTP status, and JSON
 used for screenshot 03.
+
+Operational status was rechecked after waking both free-tier applications:
+Q1 `/health` and Q5 `/index.html` returned HTTP 200 at
+**2026-07-26 20:46:07 UTC**. Q5's ephemeral in-container metric history restarted
+at **2026-07-26 20:45:34.818046 UTC** and resumed its one-minute growth cadence.
 
 All service URLs and Docker image names are also listed in the repository root
 [README](../../README.md).

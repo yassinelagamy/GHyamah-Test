@@ -21,7 +21,7 @@ flowchart LR
 ```
 
 The free Ghaymah account used for this assessment permits five total resources.
-The two required live applications (`ghaymah-api` and `mithal-monitor`) already
+The two required deployed applications (`ghaymah-api` and `mithal-monitor`) already
 consume the available allocation together with their supporting resources. A
 third Ghaymah application was tested and rejected by the platform with the
 documented account message `Resource limit exceeded ... maximum 5 resources`.
@@ -36,7 +36,7 @@ The workflow runs on a push to `main` and through `workflow_dispatch`. It uses:
 | Secret `DOCKERHUB_USERNAME` | Docker Hub account and image namespace. |
 | Secret `DOCKERHUB_TOKEN` | Read/write Docker Hub access token. |
 | Variable `GHAYMAH_STAGING_APP` | Display name for the ephemeral staging service. |
-| Variable `GHAYMAH_PRODUCTION_APP` | Name of the live Ghaymah application. |
+| Variable `GHAYMAH_PRODUCTION_APP` | Name of the deployed Ghaymah application. |
 | Variable `GHAYMAH_PRODUCTION_URL` | Public base URL used for the production verification. |
 
 Images are published as:
@@ -136,7 +136,7 @@ bash scripts/verify_deployment.sh \
   --expected-release "$GITHUB_SHA"
 ```
 
-It retries `/health`, requires `status=ok`, compares the live `release` to the
+It retries `/health`, requires `status=ok`, compares the deployed `release` to the
 approved SHA, writes evidence to the GitHub job summary, and exits nonzero for
 an unavailable or stale deployment.
 
