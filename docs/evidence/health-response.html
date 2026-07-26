@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Q1 Live Health Verification</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0d1117; color: #e6edf3; }
+    main { width: min(900px, calc(100% - 64px)); padding: 40px; border: 1px solid #30363d; border-radius: 16px; background: #161b22; }
+    .status { display: inline-flex; gap: 10px; align-items: center; padding: 8px 14px; border-radius: 999px; color: #3fb950; background: #183d27; font-weight: 700; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #3fb950; }
+    h1 { margin: 20px 0 8px; font-size: 32px; }
+    p { color: #8b949e; }
+    a { color: #58a6ff; word-break: break-all; }
+    pre { margin-top: 28px; padding: 24px; overflow: auto; border-radius: 12px; background: #0d1117; color: #c9d1d9; font-size: 16px; line-height: 1.65; }
+    .meta { margin-top: 24px; display: flex; gap: 28px; color: #8b949e; font-size: 14px; }
+    strong { color: #e6edf3; }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="status"><span class="dot"></span>HTTP 200 · HEALTHY</span>
+    <h1>Q1 Live Health Verification</h1>
+    <p><a href="https://ghaymah-api-615e99f13665.hosted.ghaymah.systems/health">https://ghaymah-api-615e99f13665.hosted.ghaymah.systems/health</a></p>
+    <pre>{
+  "status": "ok",
+  "release": "60b9e2c38e3f1a509383c6d61a7f76b9d043214a",
+  "uptime_s": 143.213,
+  "timestamp": "2026-07-26T18:48:18.536427+00:00"
+}</pre>
+    <div class="meta">
+      <span><strong>Checked:</strong> 2026-07-26 18:48:19 UTC</span>
+      <span><strong>Source:</strong> Ghaymah public endpoint</span>
+    </div>
+  </main>
+</body>
+</html>

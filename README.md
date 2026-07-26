@@ -23,6 +23,8 @@ monitoring dashboard.
 - Docker Hub API image: `docker.io/agamy74/ghaymah-api`
 - Docker Hub dashboard image: `docker.io/agamy74/mithal-monitor`
 - Public repository: <https://github.com/yassinelagamy/GHyamah-Test>
+- Successful protected deployment run:
+  <https://github.com/yassinelagamy/GHyamah-Test/actions/runs/30215537509>
 
 ## Deployment evidence
 

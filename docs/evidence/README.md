@@ -15,5 +15,8 @@ duplicate captures are not included.
 | 07 | `07-production-approval.png` | GitHub `production` Environment required-reviewer protection. |
 | 08 | `08-pipeline-success.png` | Successful build, staging verification, approval, and production verification. |
 
+`health-response.html` records the URL, UTC check time, HTTP status, and JSON
+used for screenshot 03.
+
 All service URLs and Docker image names are also listed in the repository root
 [README](../../README.md).

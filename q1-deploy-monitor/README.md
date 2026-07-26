@@ -268,14 +268,15 @@ const DATA_URL = '../monitor/data/checks.json';
 
 ### Against the live Ghaymah deployment
 
-Checked on 2026-07-26 at 17:23 UTC, ~32 minutes after deployment:
+Final release checked on 2026-07-26 at 18:48 UTC:
 
 | Endpoint | Result |
 |---|---|
-| `/health` | HTTP 200 · `{"status":"ok","uptime_s":1950.129,"timestamp":"2026-07-26T17:23:30.797215+00:00"}` |
-| `/` | service metadata, `started_at` `2026-07-26T16:51:00.668703+00:00` |
-| `/metrics` | `{"requests_total":118,"started_at":"2026-07-26T16:51:00.668703+00:00"}` — the counter reflects real traffic from the monitor |
+| `/health` | HTTP 200 · `status=ok`; release `60b9e2c38e3f1a509383c6d61a7f76b9d043214a` |
+| `/` | Service metadata and the same immutable release identifier |
+| `/metrics` | Valid request counter and process start time; the counter reflects real monitor traffic |
 
-The monitor has been polling the live URL every 30 s since deployment; `monitor/data/checks.json`
-contains only checks against the deployed application (earlier records from local
-container testing were removed so the dashboard reflects one target).
+The monitor polls the live URL every 30 seconds. The committed
+`monitor/data/checks.json` is a submission snapshot; ongoing checks continue in
+the `ghaymah-q1-monitor-history` Docker volume so normal monitoring does not
+dirty the repository.
