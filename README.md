@@ -6,11 +6,26 @@ This repository contains the five deliverables for the Ghaymah cloud platform as
 
 | Question | Deliverable | Status |
 |---|---|---|
-| Q1 — Deploy and monitor an API | [Application, monitor, dashboard, and deployment guide](q1-deploy-monitor/README.md) | Implementation complete; live Ghaymah deployment evidence pending |
+| Q1 — Deploy and monitor an API | [Application, monitor, dashboard, and deployment guide](q1-deploy-monitor/README.md) | Live on Ghaymah |
 | Q2 — OOMKilled postmortem | [POSTMORTEM.md](q2-postmortem/POSTMORTEM.md) | Complete |
 | Q3 — CI/CD pipeline | [Workflow](.github/workflows/deploy.yml) and [CICD.md](q3-cicd/CICD.md) | Build/push and approval gate complete; automated Ghaymah image update awaiting a documented non-interactive command |
 | Q4 — Scalability | [SCALABILITY.md](q4-scalability/SCALABILITY.md) | Complete |
-| Q5 — mithal.space monitoring | [Collector and dashboard](q5-mithal-dashboard/) | Implementation present; live deployment evidence pending |
+| Q5 — mithal.space monitoring | [Collector and dashboard](q5-mithal-dashboard/) | Live on Ghaymah |
+
+## Live deployments
+
+- Q1 API: <https://ghaymah-api-615e99f13665.hosted.ghaymah.systems>
+- Q1 health: <https://ghaymah-api-615e99f13665.hosted.ghaymah.systems/health>
+- Q5 monitoring dashboard: <https://mithal-monitor-292f00f076b1.hosted.ghaymah.systems>
+- Docker Hub API image: `docker.io/agamy74/ghaymah-api:8bc563f`
+- Docker Hub dashboard image: `docker.io/agamy74/mithal-monitor:8bc563f`
+- GitHub repository: <https://github.com/yassinelagamy/GHyamah-Test>
+
+## Deployment evidence
+
+- [Ghaymah project](screenshots/ghaymah-project-created.png)
+- [Q1 API service](screenshots/q1-ghaymah-service.png)
+- [Q5 monitoring service](screenshots/q5-ghaymah-service.png)
 
 ## Current verified Ghaymah information
 
@@ -69,15 +84,11 @@ python q5-mithal-dashboard/collector/collect.py --once
 
 ## Work that requires account access
 
-The following cannot be completed safely from source code alone:
+The following require a credential or capability that is not available in the public documentation:
 
-1. Create the Ghaymah projects/applications and obtain their IDs and public URLs.
-2. Push the Docker images using the owner's registry credentials.
-3. Deploy Q1 and Q5 and capture the required screenshots.
-4. Configure GitHub secrets and the `production` Environment with required reviewers.
-5. Confirm the supported non-interactive Ghaymah authentication mechanism for GitHub Actions.
-6. Confirm the command/API that updates an existing Ghaymah application to a specific external image tag.
-7. Run the workflow, approve production, and capture the approval evidence.
-8. Confirm monitoring/autoscaling controls and Block Storage limits in the authenticated dashboard before removing remaining `VERIFY` markers.
+1. Add `DOCKERHUB_TOKEN` and any confirmed Ghaymah CI authentication secret to GitHub.
+2. Confirm the supported API-token authentication mechanism and image field for `gy resource app update`.
+3. Approve the production GitHub Environment after the image-build job succeeds and capture the approval evidence.
+4. Confirm monitoring/autoscaling controls, snapshot behavior, and detailed Block Storage performance limits before removing the remaining `VERIFY` markers.
 
 No credentials should be committed to this repository. Use GitHub Secrets and Ghaymah's secret-management controls for sensitive values.

@@ -156,24 +156,23 @@ Image notes:
 
 ## 5. Deploy to Ghaymah
 
-Ghaymah deploys from a **public image URL**, so push the image to Docker Hub first.
-Replace `<MY_DOCKERHUB_USER>` with your account name.
+This deployment uses Docker Hub namespace `agamy74`.
 
 ```bash
 docker login
 ```
 
 ```bash
-docker tag mithal-monitor:latest docker.io/<MY_DOCKERHUB_USER>/mithal-monitor:latest
+docker tag mithal-monitor:latest docker.io/agamy74/mithal-monitor:latest
 ```
 
 ```bash
-docker push docker.io/<MY_DOCKERHUB_USER>/mithal-monitor:latest
+docker push docker.io/agamy74/mithal-monitor:latest
 ```
 
 > On Apple Silicon / ARM, build for the platform Ghaymah runs:
 > ```bash
-> docker buildx build --platform linux/amd64 -t docker.io/<MY_DOCKERHUB_USER>/mithal-monitor:latest --push ./q5-mithal-dashboard
+> docker buildx build --platform linux/amd64 -t docker.io/agamy74/mithal-monitor:latest --push ./q5-mithal-dashboard
 > ```
 
 Make sure the Docker Hub repository is **public** — Ghaymah pulls it anonymously.
@@ -182,13 +181,13 @@ Then, in the Ghaymah dashboard:
 
 | Field | Value |
 |---|---|
-| Container Image URL | `docker.io/<MY_DOCKERHUB_USER>/mithal-monitor:latest` |
+| Container Image URL | `docker.io/agamy74/mithal-monitor:8bc563f` |
 | Application Name | `mithal-monitor` |
 | Port Number | `8080` (matches `EXPOSE`) |
 | Public Access | **enabled** |
 | Environment Variables | *(optional)* `INTERVAL_S=60`, `TARGET_URL=https://mithal.space`, `SEARCH_URL=https://mithal.space/search?q=test` |
 
-Click **Deploy**, then open `<the public URL Ghaymah assigns>/index.html` and
+Click **Deploy**, then open `https://mithal-monitor-292f00f076b1.hosted.ghaymah.systems/index.html` and
 screenshot the live dashboard. Leave it running so the 24 h uptime tile and the
 hourly chart fill with real history before submission.
 

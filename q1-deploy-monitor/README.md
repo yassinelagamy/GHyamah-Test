@@ -94,9 +94,8 @@ docker ps --filter name=ghaymah-api
 
 ## 3. Push the image and deploy on Ghaymah
 
-Ghaymah deploys a container from a **public image URL**, so the image must live in
-a public registry first. Docker Hub is used here — replace `<MY_DOCKERHUB_USER>`
-with your own account name.
+Ghaymah deploys a container from a container image URL. This deployment uses
+Docker Hub namespace `agamy74`.
 
 ### 3.1 Push to Docker Hub
 
@@ -105,17 +104,17 @@ docker login
 ```
 
 ```bash
-docker tag ghaymah-api:latest docker.io/<MY_DOCKERHUB_USER>/ghaymah-api:latest
+docker tag ghaymah-api:latest docker.io/agamy74/ghaymah-api:latest
 ```
 
 ```bash
-docker push docker.io/<MY_DOCKERHUB_USER>/ghaymah-api:latest
+docker push docker.io/agamy74/ghaymah-api:latest
 ```
 
 > Building on an Apple Silicon / ARM machine? Build for the platform Ghaymah runs
 > (`linux/amd64`) or the container will fail to start:
 > ```bash
-> docker buildx build --platform linux/amd64 -t docker.io/<MY_DOCKERHUB_USER>/ghaymah-api:latest --push ./q1-deploy-monitor/app
+> docker buildx build --platform linux/amd64 -t docker.io/agamy74/ghaymah-api:latest --push ./q1-deploy-monitor/app
 > ```
 
 Make sure the Docker Hub repository is **public** — Ghaymah pulls the image
@@ -125,7 +124,7 @@ anonymously from the URL you paste in.
 
 | Field | Value |
 |---|---|
-| Container Image URL | `docker.io/<MY_DOCKERHUB_USER>/ghaymah-api:latest` |
+| Container Image URL | `docker.io/agamy74/ghaymah-api:8bc563f` |
 | Application Name | `ghaymah-api` |
 | Port Number | `8080` (must match the `EXPOSE`d port) |
 | Public Access | **enabled** |
@@ -137,12 +136,12 @@ service a public URL.
 ### 3.3 Verify the live deployment
 
 ```bash
-curl -f <the public URL Ghaymah assigns>/health
+curl -f https://ghaymah-api-615e99f13665.hosted.ghaymah.systems/health
 ```
 
 Expected: HTTP 200 with `{"status":"ok","uptime_s":...,"timestamp":"..."}`.
 
-Also open `<the public URL Ghaymah assigns>/docs` in a browser for the OpenAPI page,
+Also open `https://ghaymah-api-615e99f13665.hosted.ghaymah.systems/docs` in a browser for the OpenAPI page,
 and screenshot both the running service in the Ghaymah dashboard and the `/health`
 response for the submission.
 
@@ -157,14 +156,14 @@ response for the submission.
 `monitor/monitor.py` uses the **Python standard library only** — nothing to install.
 
 ```bash
-export APP_URL="<the public URL Ghaymah assigns>"
+export APP_URL="https://ghaymah-api-615e99f13665.hosted.ghaymah.systems"
 python q1-deploy-monitor/monitor/monitor.py
 ```
 
 On Windows PowerShell:
 
 ```bash
-$env:APP_URL="<the public URL Ghaymah assigns>"; python q1-deploy-monitor\monitor\monitor.py
+$env:APP_URL="https://ghaymah-api-615e99f13665.hosted.ghaymah.systems"; python q1-deploy-monitor\monitor\monitor.py
 ```
 
 Every 30 seconds it issues `GET $APP_URL/health` with a 5 s timeout, then
@@ -191,7 +190,7 @@ Every 30 seconds it issues `GET $APP_URL/health` with a 5 s timeout, then
 Single check (useful for cron, CI or a smoke test — exits `0` if up, `1` if down):
 
 ```bash
-APP_URL="<the public URL Ghaymah assigns>" python q1-deploy-monitor/monitor/monitor.py --once
+APP_URL="https://ghaymah-api-615e99f13665.hosted.ghaymah.systems" python q1-deploy-monitor/monitor/monitor.py --once
 ```
 
 Leave the loop running well before the submission so the dashboard has real history.
