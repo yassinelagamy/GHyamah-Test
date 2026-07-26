@@ -4,20 +4,52 @@ Complete implementation of the five Ghaymah cloud assessment tasks: deployment,
 monitoring, incident analysis, CI/CD, scalability, and the `mithal.space`
 monitoring dashboard.
 
+## Submission entry point
+
+This public GitPasha repository is the assessment submission:
+
+**<https://app.gitpasha.com/agamy74/GHyamah-Test>**
+
+An evaluator can review all five answers, source code, deployment evidence, and
+screenshots directly from this repository. Relative links below are intentionally
+used so navigation works inside GitPasha.
+
+Q3 specifically requires GitHub Actions and a GitHub `production` Environment.
+GitHub is therefore retained as the public CI execution and evidence backend:
+
+- Source/CI mirror: <https://github.com/yassinelagamy/GHyamah-Test>
+- Successful protected workflow:
+  <https://github.com/yassinelagamy/GHyamah-Test/actions/runs/30215537509>
+- The successful run contains three passing jobs: build and push, staging
+  verification, and production verification.
+- The `production` Environment requires reviewer `yassinelagamy`.
+
+## Submission readiness
+
+| Check | Result |
+|---|---|
+| Required questions | Q1–Q5 implemented and linked below |
+| Unresolved markers | Clean: no assessment placeholders or verification comments |
+| Container builds | Q1 and Q5 rebuilt successfully from the submitted source |
+| Runtime checks | Q1 API/health/metrics and Q5 dashboard/collector passed isolated container tests |
+| Deployment check | Q1 `/health` and Q5 `/index.html` returned HTTP 200 at **2026-07-26 22:47:06 UTC** |
+| CI/CD | Protected GitHub Actions run completed successfully |
+| Evidence | Eight curated screenshots plus the recorded health response |
+
 ## Deliverables
 
 | Question | Deliverable | Status |
 |---|---|---|
-| Q1 — Deploy and monitor an API | [Application, monitor, dashboard, and deployment guide](q1-deploy-monitor/README.md) | HTTP 200 verified 2026-07-26 20:46:07 UTC |
+| Q1 — Deploy and monitor an API | [Application, monitor, dashboard, and deployment guide](q1-deploy-monitor/README.md) | HTTP 200 verified 2026-07-26 22:47:06 UTC |
 | Q2 — OOMKilled postmortem | [Professional blameless postmortem](q2-postmortem/POSTMORTEM.md) | Complete |
 | Q3 — CI/CD pipeline | [Workflow](.github/workflows/deploy.yml) and [documentation](q3-cicd/CICD.md) | Complete |
 | Q4 — Scalability | [Architecture, capacity calculation, cold starts, and storage](q4-scalability/SCALABILITY.md) | Complete |
-| Q5 — `mithal.space` monitoring | [Collector and dashboard](q5-mithal-dashboard/) | HTTP 200 verified 2026-07-26 20:46:07 UTC |
+| Q5 — `mithal.space` monitoring | [Collector and dashboard](q5-mithal-dashboard/) | HTTP 200 verified 2026-07-26 22:47:06 UTC |
 
 ## Service endpoints
 
 Both application endpoints returned HTTP 200 in a fresh check at
-**2026-07-26 20:46:07 UTC**:
+**2026-07-26 22:47:06 UTC**:
 
 - Q1 API: <https://ghaymah-api-615e99f13665.hosted.ghaymah.systems>
 - Q1 health: <https://ghaymah-api-615e99f13665.hosted.ghaymah.systems/health>
@@ -25,7 +57,8 @@ Both application endpoints returned HTTP 200 in a fresh check at
 - Q5 dashboard: <https://mithal-monitor-292f00f076b1.hosted.ghaymah.systems>
 - Docker Hub API image: `docker.io/agamy74/ghaymah-api`
 - Docker Hub dashboard image: `docker.io/agamy74/mithal-monitor`
-- Public repository: <https://github.com/yassinelagamy/GHyamah-Test>
+- Submission repository: <https://app.gitpasha.com/agamy74/GHyamah-Test>
+- Public source/CI mirror: <https://github.com/yassinelagamy/GHyamah-Test>
 - Successful protected deployment run:
   <https://github.com/yassinelagamy/GHyamah-Test/actions/runs/30215537509>
 
@@ -66,7 +99,7 @@ workflow does not report a stale or unverified deployment as successful.
 The account's five-resource free-plan limit prevents a third persistent Ghaymah
 application, so staging runs as an isolated ephemeral container on the Actions
 runner. Production and the Q5 dashboard both returned HTTP 200 at
-2026-07-26 20:46:07 UTC.
+2026-07-26 22:47:06 UTC.
 
 ## Free-tier hibernation policy
 
