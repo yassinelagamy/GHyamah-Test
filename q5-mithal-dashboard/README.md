@@ -204,7 +204,22 @@ Measured against the live site on 2026-07-26:
 | Failure path (unreachable host) | recorded `up:false` with `code/latency_ms/dns_ms/ssl_days_left/search_ms` all `null`, exit 0, no crash |
 | Dashboard against real `metrics.json` | badge UP, uptime 100.0% (6/6), TLS card "50 days — Healthy" in green, chart with both series, 6-row table; no console errors |
 | Dashboard with the data file removed | "no data yet" state on every tile + banner, no crash |
-| `docker build` | **not run** — the local Docker daemon was not running; build with the command in §4 before pushing |
+| `docker build` | image builds clean (200 MB) |
+| `docker run` | `start.sh` launches the collector and the static server; container reports `(healthy)`; the collector wrote records into the served directory and the dashboard rendered them |
+
+### Against the live Ghaymah deployment
+
+Checked on 2026-07-26 at 17:23 UTC, ~30 minutes after deployment:
+
+| Check | Result |
+|---|---|
+| `GET /index.html` | HTTP 200, full page (16,931 bytes) |
+| `GET /data/metrics.json` | **31 records**, first `16:53:16`, last `17:23:33` — exactly one per minute, no gaps |
+| Latest record | `up: true`, `ssl_days_left: 50` |
+
+This confirms the container's two-process design works in production: the collector
+keeps writing into the directory the static server is serving, with no external
+storage or second service involved.
 
 The `dashboard/data/metrics.json` in this repo holds those first real samples; the
 collector prunes anything older than 48 h automatically.

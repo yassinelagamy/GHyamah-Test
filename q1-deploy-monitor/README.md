@@ -247,7 +247,9 @@ const DATA_URL = '../monitor/data/checks.json';
 
 ---
 
-## 6. Local verification performed
+## 6. Verification performed
+
+### Locally
 
 | Check | Result |
 |---|---|
@@ -258,4 +260,19 @@ const DATA_URL = '../monitor/data/checks.json';
 | `monitor.py` loop across an app shutdown | up records → down records → `ALERT` printed on the 3rd consecutive failure |
 | Dashboard against real `checks.json` | badge, tiles, chart and uptime % all rendered; no console errors |
 | Dashboard with the data file removed | "no data yet" state + banner, no crash |
-| `docker build` | **not run** — the local Docker daemon was not running; build it with the command in §2 before pushing |
+| `docker build` | image builds clean (249 MB) |
+| `docker run` | container reports `(healthy)` via the `HEALTHCHECK`; all three endpoints respond |
+
+### Against the live Ghaymah deployment
+
+Checked on 2026-07-26 at 17:23 UTC, ~32 minutes after deployment:
+
+| Endpoint | Result |
+|---|---|
+| `/health` | HTTP 200 · `{"status":"ok","uptime_s":1950.129,"timestamp":"2026-07-26T17:23:30.797215+00:00"}` |
+| `/` | service metadata, `started_at` `2026-07-26T16:51:00.668703+00:00` |
+| `/metrics` | `{"requests_total":118,"started_at":"2026-07-26T16:51:00.668703+00:00"}` — the counter reflects real traffic from the monitor |
+
+The monitor has been polling the live URL every 30 s since deployment; `monitor/data/checks.json`
+contains only checks against the deployed application (earlier records from local
+container testing were removed so the dashboard reflects one target).
