@@ -1,0 +1,101 @@
+name: Build and deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/ghaymah-api
+
+jobs:
+  build-push:
+    name: Build and push image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push immutable and latest tags
+        uses: docker/build-push-action@v6
+        with:
+          context: q1-deploy-monitor/app
+          file: q1-deploy-monitor/app/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+
+  deploy-staging:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    needs: build-push
+    env:
+      DEPLOY_IMAGE: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/ghaymah-api:${{ github.sha }}
+      GHAYMAH_APP_NAME: ${{ vars.GHAYMAH_STAGING_APP }}
+      GHAYMAH_API_TOKEN: ${{ secrets.GHAYMAH_API_TOKEN }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show staging deployment target
+        run: |
+          echo "Image to deploy: ${DEPLOY_IMAGE}"
+          echo "Ghaymah app: ${GHAYMAH_APP_NAME:-myapp-staging}"
+
+      - name: Install the documented Ghaymah CLI
+        run: |
+          # VERIFY: Official installation command as published at https://ghaymah.systems/docs on 2026-07-26.
+          curl -sSL https://cli.ghaymah.systems/install.sh | bash
+          echo "$HOME/ghaymah/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy staging image
+        shell: bash
+        run: |
+          # VERIFY: The CLI is documented, but non-interactive token auth and external-image update syntax are not. Replace this adapter when confirmed.
+          bash scripts/ghaymah_deploy.sh \
+            --app "${GHAYMAH_APP_NAME:-myapp-staging}" \
+            --image "${DEPLOY_IMAGE}"
+
+  deploy-production:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: production
+    env:
+      DEPLOY_IMAGE: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/ghaymah-api:${{ github.sha }}
+      GHAYMAH_APP_NAME: ${{ vars.GHAYMAH_PRODUCTION_APP }}
+      GHAYMAH_API_TOKEN: ${{ secrets.GHAYMAH_API_TOKEN }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show production deployment target
+        run: |
+          echo "Image to deploy: ${DEPLOY_IMAGE}"
+          echo "Ghaymah app: ${GHAYMAH_APP_NAME:-myapp-production}"
+
+      - name: Install the documented Ghaymah CLI
+        run: |
+          # VERIFY: Official installation command as published at https://ghaymah.systems/docs on 2026-07-26.
+          curl -sSL https://cli.ghaymah.systems/install.sh | bash
+          echo "$HOME/ghaymah/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy production image
+        shell: bash
+        run: |
+          # VERIFY: The CLI is documented, but non-interactive token auth and external-image update syntax are not. Replace this adapter when confirmed.
+          bash scripts/ghaymah_deploy.sh \
+            --app "${GHAYMAH_APP_NAME:-myapp-production}" \
+            --image "${DEPLOY_IMAGE}"

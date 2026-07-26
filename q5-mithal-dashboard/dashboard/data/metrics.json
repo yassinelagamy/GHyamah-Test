@@ -1,0 +1,56 @@
+[
+  {
+    "ts": "2026-07-26T15:44:13.109453+00:00",
+    "up": true,
+    "code": 200,
+    "latency_ms": 2693.14,
+    "dns_ms": 7.07,
+    "ssl_days_left": 50,
+    "search_ms": 866.47
+  },
+  {
+    "ts": "2026-07-26T15:46:03.954555+00:00",
+    "up": true,
+    "code": 200,
+    "latency_ms": 1057.54,
+    "dns_ms": 7.42,
+    "ssl_days_left": 50,
+    "search_ms": 958.25
+  },
+  {
+    "ts": "2026-07-26T15:46:12.414865+00:00",
+    "up": true,
+    "code": 200,
+    "latency_ms": 1016.96,
+    "dns_ms": 0.56,
+    "ssl_days_left": 50,
+    "search_ms": 942.73
+  },
+  {
+    "ts": "2026-07-26T15:46:20.678443+00:00",
+    "up": true,
+    "code": 200,
+    "latency_ms": 781.13,
+    "dns_ms": 0.38,
+    "ssl_days_left": 50,
+    "search_ms": 956.94
+  },
+  {
+    "ts": "2026-07-26T15:46:32.017215+00:00",
+    "up": true,
+    "code": 200,
+    "latency_ms": 1828.99,
+    "dns_ms": 0.5,
+    "ssl_days_left": 50,
+    "search_ms": 2967.25
+  },
+  {
+    "ts": "2026-07-26T15:46:40.381676+00:00",
+    "up": true,
+    "code": 200,
+    "latency_ms": 848.58,
+    "dns_ms": 0.67,
+    "ssl_days_left": 50,
+    "search_ms": 1056.08
+  }
+]

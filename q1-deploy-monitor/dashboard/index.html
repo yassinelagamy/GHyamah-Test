@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ghaymah API — Monitoring Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2129;
+    --border: #262d38;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --up: #3fb950;
+    --up-dim: rgba(63, 185, 80, .14);
+    --down: #f85149;
+    --down-dim: rgba(248, 81, 73, .14);
+    --accent: #58a6ff;
+    --warn: #d29922;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 32px 24px 56px;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+  }
+  h1 span { color: var(--muted); font-weight: 400; }
+  .updated { font-size: 13px; color: var(--muted); }
+  .updated b { color: var(--text); font-weight: 500; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card .label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .card .value {
+    font-size: 30px;
+    font-weight: 650;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .card .sub { margin-top: 6px; font-size: 13px; color: var(--muted); }
+
+  /* Status card */
+  .status-card { display: flex; flex-direction: column; justify-content: center; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    align-self: flex-start;
+  }
+  .badge .dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  .badge.up   { color: var(--up);   background: var(--up-dim);   border: 1px solid rgba(63,185,80,.35); }
+  .badge.down { color: var(--down); background: var(--down-dim); border: 1px solid rgba(248,81,73,.35); }
+  .badge.unknown { color: var(--muted); background: #1c2129; border: 1px solid var(--border); font-size: 18px; }
+  .badge.up .dot { animation: pulse 2.2s ease-out infinite; }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(63,185,80,.55); }
+    70%  { box-shadow: 0 0 0 9px rgba(63,185,80,0); }
+    100% { box-shadow: 0 0 0 0 rgba(63,185,80,0); }
+  }
+
+  .chart-card { padding: 20px 20px 12px; }
+  .chart-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .chart-head .label { margin: 0; }
+  .chart-box { position: relative; height: 300px; }
+
+  .empty {
+    display: flex; align-items: center; justify-content: center;
+    height: 100%; min-height: 120px;
+    color: var(--muted); font-size: 14px; text-align: center;
+    border: 1px dashed var(--border); border-radius: 10px;
+  }
+
+  .banner {
+    display: none;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(210,153,34,.35);
+    background: rgba(210,153,34,.12);
+    color: var(--warn);
+    font-size: 13.5px;
+  }
+  .banner.show { display: block; }
+  .banner code {
+    background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 4px;
+    font-size: 12.5px; color: var(--text);
+  }
+
+  footer {
+    margin-top: 24px; font-size: 12.5px; color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  code.path { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Ghaymah API <span>· monitoring</span></h1>
+    <div class="updated">Last updated <b id="updated">—</b></div>
+  </header>
+
+  <div id="banner" class="banner"></div>
+
+  <div class="grid">
+    <div class="card status-card">
+      <div class="label">Current status</div>
+      <div id="badge" class="badge unknown"><span class="dot"></span><span id="badgeText">NO DATA</span></div>
+      <div class="sub" id="statusSub">Waiting for the first check…</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Total requests</div>
+      <div class="value" id="requests">—</div>
+      <div class="sub" id="requestsSub">from /metrics</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Latest latency</div>
+      <div class="value" id="latency">—</div>
+      <div class="sub" id="latencySub">avg — · checks —</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Uptime (all checks)</div>
+      <div class="value" id="uptime">—</div>
+      <div class="sub" id="uptimeSub">— up / — down</div>
+    </div>
+  </div>
+
+  <div class="card chart-card">
+    <div class="chart-head">
+      <div class="label">Response time — latency_ms over time</div>
+      <div class="updated" id="chartRange"></div>
+    </div>
+    <div class="chart-box">
+      <canvas id="chart"></canvas>
+      <div id="chartEmpty" class="empty" style="display:none">No data yet — start the monitor to collect checks.</div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Data source: <code class="path" id="srcPath"></code></span>
+    <span>Auto-refresh every 30s</span>
+  </footer>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Path to the JSON array written by monitor/monitor.py. Change if you serve
+// the dashboard from a different location.
+const DATA_URL = '../monitor/data/checks.json';
+const REFRESH_MS = 30000;
+const MAX_POINTS = 120; // most recent N checks shown on the chart
+// ---------------------------------------------------------------------------
+
+const $ = (id) => document.getElementById(id);
+$('srcPath').textContent = DATA_URL;
+
+let chart = null;
+
+function fmtTime(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return String(iso ?? '—');
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function fmtDateTime(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return String(iso ?? '—');
+  return d.toLocaleString([], { month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function showBanner(msg) {
+  const b = $('banner');
+  b.innerHTML = msg;
+  b.classList.add('show');
+}
+function hideBanner() { $('banner').classList.remove('show'); }
+
+function setBadge(state, text) {
+  const badge = $('badge');
+  badge.className = 'badge ' + state;
+  $('badgeText').textContent = text;
+}
+
+function renderEmpty(reason) {
+  setBadge('unknown', 'NO DATA');
+  $('statusSub').textContent = reason || 'Waiting for the first check…';
+  $('requests').textContent = '—';
+  $('latency').textContent = '—';
+  $('latencySub').textContent = 'avg — · checks —';
+  $('uptime').textContent = '—';
+  $('uptimeSub').textContent = '— up / — down';
+  $('chartRange').textContent = '';
+  $('chartEmpty').style.display = 'flex';
+  $('chart').style.display = 'none';
+  if (chart) { chart.destroy(); chart = null; }
+}
+
+function renderChart(points) {
+  $('chartEmpty').style.display = 'none';
+  $('chart').style.display = 'block';
+
+  const labels = points.map(p => fmtTime(p.ts));
+  // Down checks have no latency — null creates a visible gap in the line.
+  const data = points.map(p => (typeof p.latency_ms === 'number' ? p.latency_ms : null));
+  const colors = points.map(p => (p.status === 'up' ? '#3fb950' : '#f85149'));
+
+  if (chart) {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.data.datasets[0].pointBackgroundColor = colors;
+    chart.update('none');
+    return;
+  }
+
+  const ctx = $('chart').getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, 'rgba(88,166,255,.28)');
+  gradient.addColorStop(1, 'rgba(88,166,255,0)');
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'latency (ms)',
+        data,
+        borderColor: '#58a6ff',
+        backgroundColor: gradient,
+        borderWidth: 2,
+        pointRadius: 2.5,
+        pointHoverRadius: 5,
+        pointBackgroundColor: colors,
+        pointBorderWidth: 0,
+        tension: .3,
+        fill: true,
+        spanGaps: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1c2129',
+          borderColor: '#262d38',
+          borderWidth: 1,
+          titleColor: '#e6edf3',
+          bodyColor: '#8b949e',
+          padding: 10,
+          displayColors: false,
+          callbacks: {
+            label: (c) => c.parsed.y === null ? 'down — no response' : `${c.parsed.y.toFixed(1)} ms`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,.05)' },
+          ticks: { color: '#8b949e', maxTicksLimit: 10, maxRotation: 0, autoSkip: true }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(255,255,255,.05)' },
+          ticks: { color: '#8b949e', callback: (v) => v + ' ms' }
+        }
+      }
+    }
+  });
+}
+
+function render(records) {
+  if (!Array.isArray(records) || records.length === 0) {
+    renderEmpty('No checks recorded yet.');
+    return;
+  }
+
+  const valid = records.filter(r => r && typeof r === 'object');
+  if (valid.length === 0) { renderEmpty('Data file contains no usable checks.'); return; }
+
+  const latest = valid[valid.length - 1];
+  const isUp = latest.status === 'up';
+
+  setBadge(isUp ? 'up' : 'down', isUp ? 'UP' : 'DOWN');
+  $('statusSub').textContent =
+    (latest.code != null ? `HTTP ${latest.code}` : 'no response') + ' · ' + fmtDateTime(latest.ts);
+
+  $('requests').textContent =
+    typeof latest.requests === 'number' ? latest.requests.toLocaleString() : '—';
+  $('requestsSub').textContent =
+    typeof latest.requests === 'number' ? 'from /metrics' : '/metrics unavailable';
+
+  $('latency').textContent =
+    typeof latest.latency_ms === 'number' ? `${latest.latency_ms.toFixed(0)} ms` : '—';
+
+  const latencies = valid.map(r => r.latency_ms).filter(v => typeof v === 'number');
+  const avg = latencies.length
+    ? (latencies.reduce((a, b) => a + b, 0) / latencies.length).toFixed(0) + ' ms'
+    : '—';
+  $('latencySub').textContent = `avg ${avg} · ${valid.length} checks`;
+
+  const upCount = valid.filter(r => r.status === 'up').length;
+  const pct = (upCount / valid.length) * 100;
+  $('uptime').textContent = `${pct.toFixed(1)}%`;
+  $('uptimeSub').textContent = `${upCount} up / ${valid.length - upCount} down`;
+
+  const points = valid.slice(-MAX_POINTS);
+  $('chartRange').textContent =
+    points.length > 1 ? `${fmtTime(points[0].ts)} → ${fmtTime(points[points.length - 1].ts)}` : '';
+  renderChart(points);
+}
+
+async function load() {
+  try {
+    const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    hideBanner();
+    render(data);
+  } catch (err) {
+    // Missing file, invalid JSON, or file:// CORS block — never crash the page.
+    renderEmpty('Could not load monitoring data.');
+    showBanner(
+      `Could not read <code>${DATA_URL}</code> (${err.message}). ` +
+      `Run the monitor to create it, and serve this page over HTTP ` +
+      `(<code>python -m http.server 8000</code> from <code>q1-deploy-monitor/</code>) ` +
+      `— opening the file directly with <code>file://</code> blocks the fetch.`
+    );
+  }
+  $('updated').textContent = new Date().toLocaleTimeString();
+}
+
+load();
+setInterval(load, REFRESH_MS);
+</script>
+</body>
+</html>

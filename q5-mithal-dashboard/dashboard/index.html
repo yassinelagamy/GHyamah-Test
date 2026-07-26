@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mithal.space — Monitoring Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #262d38;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --up: #3fb950;
+    --up-dim: rgba(63,185,80,.14);
+    --down: #f85149;
+    --down-dim: rgba(248,81,73,.14);
+    --warn: #d29922;
+    --warn-dim: rgba(210,153,34,.14);
+    --accent: #58a6ff;
+    --accent-2: #bc8cff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 32px 24px 56px;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; }
+
+  header {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    align-items: baseline; justify-content: space-between;
+    margin-bottom: 26px;
+  }
+  h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+  h1 a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--border); }
+  h1 a:hover { border-bottom-color: var(--accent); }
+  h1 span { color: var(--muted); font-weight: 400; }
+  .updated { font-size: 13px; color: var(--muted); }
+  .updated b { color: var(--text); font-weight: 500; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); margin-bottom: 10px;
+  }
+  .value {
+    font-size: 30px; font-weight: 650; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .sub { margin-top: 6px; font-size: 13px; color: var(--muted); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 8px 16px; border-radius: 999px;
+    font-size: 19px; font-weight: 700; letter-spacing: .04em;
+    align-self: flex-start;
+  }
+  .badge .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+  .badge.up   { color: var(--up);   background: var(--up-dim);   border: 1px solid rgba(63,185,80,.35); }
+  .badge.down { color: var(--down); background: var(--down-dim); border: 1px solid rgba(248,81,73,.35); }
+  .badge.unknown { color: var(--muted); background: #1c2129; border: 1px solid var(--border); font-size: 16px; }
+  .badge.up .dot { animation: pulse 2.2s ease-out infinite; }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(63,185,80,.55); }
+    70%  { box-shadow: 0 0 0 9px rgba(63,185,80,0); }
+    100% { box-shadow: 0 0 0 0 rgba(63,185,80,0); }
+  }
+
+  /* SSL card colour states */
+  .ssl-ok   .value { color: var(--up); }
+  .ssl-warn .value { color: var(--warn); }
+  .ssl-crit .value { color: var(--down); }
+  .ssl-pill {
+    display: inline-block; margin-top: 8px; padding: 3px 10px;
+    border-radius: 999px; font-size: 12px; font-weight: 600;
+  }
+  .ssl-ok   .ssl-pill { color: var(--up);   background: var(--up-dim); }
+  .ssl-warn .ssl-pill { color: var(--warn); background: var(--warn-dim); }
+  .ssl-crit .ssl-pill { color: var(--down); background: var(--down-dim); }
+
+  .chart-card { padding: 20px 20px 12px; }
+  .chart-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 6px;
+  }
+  .chart-head .label { margin: 0; }
+  .legend { display: flex; gap: 16px; font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+  .chart-box { position: relative; height: 300px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td {
+    text-align: left; padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  th {
+    font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--muted); font-weight: 600;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,.02); }
+  td.num { color: var(--text); }
+  td.null { color: var(--muted); }
+  .code-ok   { color: var(--up); }
+  .code-bad  { color: var(--down); }
+
+  .empty {
+    display: flex; align-items: center; justify-content: center;
+    height: 100%; min-height: 120px; padding: 24px;
+    color: var(--muted); font-size: 14px; text-align: center;
+    border: 1px dashed var(--border); border-radius: 10px;
+  }
+
+  .banner {
+    display: none; margin-bottom: 16px; padding: 12px 16px;
+    border-radius: 10px; border: 1px solid rgba(210,153,34,.35);
+    background: rgba(210,153,34,.12); color: var(--warn); font-size: 13.5px;
+  }
+  .banner.show { display: block; }
+  .banner code, footer code {
+    background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 4px;
+    font-size: 12.5px; color: var(--text);
+  }
+
+  footer {
+    margin-top: 24px; font-size: 12.5px; color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  footer code.path { color: var(--accent); background: none; padding: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1><a href="https://mithal.space" target="_blank" rel="noopener">mithal.space</a> <span>· monitoring</span></h1>
+    <div class="updated">Last updated <b id="updated">—</b></div>
+  </header>
+
+  <div id="banner" class="banner"></div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Current status</div>
+      <div id="badge" class="badge unknown"><span class="dot"></span><span id="badgeText">NO DATA</span></div>
+      <div class="sub" id="statusSub">Waiting for the first collection…</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Uptime — last 24h</div>
+      <div class="value" id="uptime">—</div>
+      <div class="sub" id="uptimeSub">— up / — checks</div>
+    </div>
+
+    <div class="card" id="sslCard">
+      <div class="label">TLS certificate</div>
+      <div class="value" id="ssl">—</div>
+      <div class="sub">days remaining</div>
+      <div class="ssl-pill" id="sslPill" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <div class="label">Latest response</div>
+      <div class="value" id="latency">—</div>
+      <div class="sub" id="latencySub">search — · dns —</div>
+    </div>
+  </div>
+
+  <div class="card chart-card">
+    <div class="chart-head">
+      <div class="label">Response time — last hour</div>
+      <div class="updated" id="chartRange"></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#58a6ff"></i>page latency</span>
+      <span><i style="background:#bc8cff"></i>search latency</span>
+    </div>
+    <div class="chart-box">
+      <canvas id="chart"></canvas>
+      <div id="chartEmpty" class="empty" style="display:none">No checks in the last hour.</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="label">Last 10 checks</div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th><th>Status</th><th>Code</th>
+            <th>Latency</th><th>DNS</th><th>Search</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div id="tableEmpty" class="empty" style="display:none">No checks recorded yet.</div>
+  </div>
+
+  <footer>
+    <span>Data source: <code class="path" id="srcPath"></code></span>
+    <span>Auto-refresh every 60s · 48h retention</span>
+  </footer>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Path to the JSON array written by collector/collect.py.
+const DATA_URL = 'data/metrics.json';
+const REFRESH_MS = 60000;
+const CHART_WINDOW_MS = 60 * 60 * 1000;   // chart shows the last hour
+const UPTIME_WINDOW_MS = 24 * 60 * 60 * 1000; // uptime % over the last 24h
+// ---------------------------------------------------------------------------
+
+const $ = (id) => document.getElementById(id);
+$('srcPath').textContent = DATA_URL;
+
+let chart = null;
+
+const isNum = (v) => typeof v === 'number' && isFinite(v);
+
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return isNaN(d) ? String(iso ?? '—')
+    : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+function fmtDateTime(iso) {
+  const d = new Date(iso);
+  return isNaN(d) ? String(iso ?? '—')
+    : d.toLocaleString([], { month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+function fmtMs(v) { return isNum(v) ? `${Math.round(v)} ms` : '—'; }
+
+function showBanner(html) { const b = $('banner'); b.innerHTML = html; b.classList.add('show'); }
+function hideBanner() { $('banner').classList.remove('show'); }
+
+function renderEmpty(reason) {
+  $('badge').className = 'badge unknown';
+  $('badgeText').textContent = 'NO DATA';
+  $('statusSub').textContent = reason || 'Waiting for the first collection…';
+  $('uptime').textContent = '—';
+  $('uptimeSub').textContent = '— up / — checks';
+  $('ssl').textContent = '—';
+  $('sslCard').className = 'card';
+  $('sslPill').style.display = 'none';
+  $('latency').textContent = '—';
+  $('latencySub').textContent = 'search — · dns —';
+  $('rows').innerHTML = '';
+  $('tableEmpty').style.display = 'flex';
+  $('chartRange').textContent = '';
+  $('chartEmpty').textContent = 'No data yet — start the collector to gather metrics.';
+  $('chartEmpty').style.display = 'flex';
+  $('chart').style.display = 'none';
+  if (chart) { chart.destroy(); chart = null; }
+}
+
+function renderChart(points) {
+  if (points.length === 0) {
+    $('chartEmpty').textContent = 'No checks in the last hour.';
+    $('chartEmpty').style.display = 'flex';
+    $('chart').style.display = 'none';
+    if (chart) { chart.destroy(); chart = null; }
+    return;
+  }
+  $('chartEmpty').style.display = 'none';
+  $('chart').style.display = 'block';
+
+  const labels = points.map(p => fmtTime(p.ts));
+  // Failed checks carry null, which draws a gap rather than a misleading zero.
+  const latency = points.map(p => (isNum(p.latency_ms) ? p.latency_ms : null));
+  const search  = points.map(p => (isNum(p.search_ms)  ? p.search_ms  : null));
+  const pointColors = points.map(p => (p.up ? '#58a6ff' : '#f85149'));
+
+  if (chart) {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = latency;
+    chart.data.datasets[0].pointBackgroundColor = pointColors;
+    chart.data.datasets[1].data = search;
+    chart.update('none');
+    return;
+  }
+
+  const ctx = $('chart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 300);
+  grad.addColorStop(0, 'rgba(88,166,255,.26)');
+  grad.addColorStop(1, 'rgba(88,166,255,0)');
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'page latency (ms)', data: latency,
+          borderColor: '#58a6ff', backgroundColor: grad,
+          borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5,
+          pointBackgroundColor: pointColors, pointBorderWidth: 0,
+          tension: .3, fill: true, spanGaps: false,
+        },
+        {
+          label: 'search latency (ms)', data: search,
+          borderColor: '#bc8cff', backgroundColor: 'transparent',
+          borderWidth: 2, borderDash: [5, 4],
+          pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#bc8cff',
+          pointBorderWidth: 0, tension: .3, fill: false, spanGaps: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1c2129', borderColor: '#262d38', borderWidth: 1,
+          titleColor: '#e6edf3', bodyColor: '#8b949e', padding: 10,
+          callbacks: {
+            label: (c) => c.parsed.y === null
+              ? `${c.dataset.label.split(' ')[0]}: failed`
+              : `${c.dataset.label.split(' ')[0]}: ${c.parsed.y.toFixed(0)} ms`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.05)' },
+             ticks: { color: '#8b949e', maxTicksLimit: 10, maxRotation: 0, autoSkip: true } },
+        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.05)' },
+             ticks: { color: '#8b949e', callback: (v) => v + ' ms' } }
+      }
+    }
+  });
+}
+
+function renderTable(records) {
+  const last10 = records.slice(-10).reverse();
+  const tbody = $('rows');
+  if (last10.length === 0) {
+    tbody.innerHTML = '';
+    $('tableEmpty').style.display = 'flex';
+    return;
+  }
+  $('tableEmpty').style.display = 'none';
+  tbody.innerHTML = last10.map(r => {
+    const cell = (v) => isNum(v)
+      ? `<td class="num">${Math.round(v)} ms</td>`
+      : `<td class="null">—</td>`;
+    const code = r.code == null
+      ? '<td class="null">—</td>'
+      : `<td class="${r.up ? 'code-ok' : 'code-bad'}">${r.code}</td>`;
+    return `<tr>
+      <td class="null">${fmtTime(r.ts)}</td>
+      <td>${r.up ? '✅' : '❌'}</td>
+      ${code}
+      ${cell(r.latency_ms)}
+      ${cell(r.dns_ms)}
+      ${cell(r.search_ms)}
+    </tr>`;
+  }).join('');
+}
+
+function renderSSL(records) {
+  // Use the most recent check that actually managed to read the certificate.
+  let days = null;
+  for (let i = records.length - 1; i >= 0; i--) {
+    if (isNum(records[i].ssl_days_left)) { days = records[i].ssl_days_left; break; }
+  }
+  const card = $('sslCard');
+  const pill = $('sslPill');
+  if (days === null) {
+    $('ssl').textContent = '—';
+    card.className = 'card';
+    pill.style.display = 'none';
+    return;
+  }
+  $('ssl').textContent = days;
+  let state, text;
+  if (days > 30)      { state = 'ssl-ok';   text = 'Healthy'; }
+  else if (days >= 8) { state = 'ssl-warn'; text = 'Renew soon'; }
+  else                { state = 'ssl-crit'; text = days <= 0 ? 'Expired' : 'Expiring'; }
+  card.className = 'card ' + state;
+  pill.className = 'ssl-pill';
+  pill.textContent = text;
+  pill.style.display = 'inline-block';
+}
+
+function render(raw) {
+  if (!Array.isArray(raw) || raw.length === 0) { renderEmpty('No checks recorded yet.'); return; }
+  const records = raw.filter(r => r && typeof r === 'object' && r.ts);
+  if (records.length === 0) { renderEmpty('Data file contains no usable checks.'); return; }
+
+  const latest = records[records.length - 1];
+  const now = Date.now();
+
+  // Status badge
+  $('badge').className = 'badge ' + (latest.up ? 'up' : 'down');
+  $('badgeText').textContent = latest.up ? 'UP' : 'DOWN';
+  $('statusSub').textContent =
+    (latest.code != null ? `HTTP ${latest.code}` : 'no response') + ' · ' + fmtDateTime(latest.ts);
+
+  // Uptime % over the last 24h
+  const window24 = records.filter(r => now - new Date(r.ts).getTime() <= UPTIME_WINDOW_MS);
+  if (window24.length > 0) {
+    const up = window24.filter(r => r.up === true).length;
+    $('uptime').textContent = ((up / window24.length) * 100).toFixed(1) + '%';
+    $('uptimeSub').textContent = `${up} up / ${window24.length} checks`;
+  } else {
+    $('uptime').textContent = '—';
+    $('uptimeSub').textContent = 'no checks in the last 24h';
+  }
+
+  // Latest response times
+  $('latency').textContent = fmtMs(latest.latency_ms);
+  $('latencySub').textContent = `search ${fmtMs(latest.search_ms)} · dns ${fmtMs(latest.dns_ms)}`;
+
+  renderSSL(records);
+
+  const hour = records.filter(r => now - new Date(r.ts).getTime() <= CHART_WINDOW_MS);
+  $('chartRange').textContent = hour.length > 1
+    ? `${fmtTime(hour[0].ts)} → ${fmtTime(hour[hour.length - 1].ts)} · ${hour.length} checks`
+    : (hour.length === 1 ? `${fmtTime(hour[0].ts)} · 1 check` : '');
+  renderChart(hour);
+  renderTable(records);
+}
+
+async function load() {
+  try {
+    const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    hideBanner();
+    render(data);
+  } catch (err) {
+    // Missing file, invalid JSON, or a file:// fetch block — degrade, never crash.
+    renderEmpty('Could not load metrics data.');
+    showBanner(
+      `Could not read <code>${DATA_URL}</code> (${err.message}). ` +
+      `Run the collector to create it, and serve this folder over HTTP ` +
+      `(<code>python -m http.server 8080</code> from <code>dashboard/</code>) ` +
+      `— opening the file with <code>file://</code> blocks the fetch.`
+    );
+  }
+  $('updated').textContent = new Date().toLocaleTimeString();
+}
+
+load();
+setInterval(load, REFRESH_MS);
+</script>
+</body>
+</html>
