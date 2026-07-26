@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 
 APP_NAME = os.getenv("APP_NAME", "ghaymah-api")
 APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
+RELEASE_SHA = os.getenv("RELEASE_SHA", "local")
 PORT = int(os.getenv("PORT", "8080"))
 
 # Process start time drives both uptime and the /metrics started_at field.
@@ -53,6 +54,7 @@ async def root():
     return {
         "service": APP_NAME,
         "version": APP_VERSION,
+        "release": RELEASE_SHA,
         "message": "Ghaymah deployment demo API",
         "endpoints": ["/", "/health", "/metrics", "/docs"],
         "started_at": STARTED_AT_ISO,
@@ -68,6 +70,7 @@ async def health():
         status_code=200,
         content={
             "status": "ok",
+            "release": RELEASE_SHA,
             "uptime_s": _uptime_s(),
             "timestamp": _now_iso(),
         },

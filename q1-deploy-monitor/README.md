@@ -39,7 +39,9 @@ every request. It is per-process and deliberately resets on restart — a counte
 that drops to zero in the dashboard is a visible signal that the container was
 restarted or redeployed.
 
-Environment variables (all optional): `APP_NAME`, `APP_VERSION`, `PORT` (default `8080`).
+Environment variables (all optional): `APP_NAME`, `APP_VERSION`, `RELEASE_SHA`,
+and `PORT` (default `8080`). CI embeds the immutable Git commit in
+`RELEASE_SHA`, and `/health` exposes it as `release` for deployment verification.
 
 ### Run locally without Docker
 
@@ -124,7 +126,7 @@ anonymously from the URL you paste in.
 
 | Field | Value |
 |---|---|
-| Container Image URL | `docker.io/agamy74/ghaymah-api:8bc563f` |
+| Container Image URL | `docker.io/agamy74/ghaymah-api:<git-commit-sha>` |
 | Application Name | `ghaymah-api` |
 | Port Number | `8080` (must match the `EXPOSE`d port) |
 | Public Access | **enabled** |
@@ -139,7 +141,8 @@ service a public URL.
 curl -f https://ghaymah-api-615e99f13665.hosted.ghaymah.systems/health
 ```
 
-Expected: HTTP 200 with `{"status":"ok","uptime_s":...,"timestamp":"..."}`.
+Expected: HTTP 200 with
+`{"status":"ok","release":"<git-commit-sha>","uptime_s":...,"timestamp":"..."}`.
 
 Also open `https://ghaymah-api-615e99f13665.hosted.ghaymah.systems/docs` in a browser for the OpenAPI page,
 and screenshot both the running service in the Ghaymah dashboard and the `/health`

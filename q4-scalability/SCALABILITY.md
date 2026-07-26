@@ -103,12 +103,10 @@ This design does not clone and concurrently mount one writable volume across rep
 
 ### Backup, performance, and capacity
 
-Crash-consistent or application-consistent volume snapshots can provide a backup building block, but database-aware backups and restore tests are still required. A snapshot should be coordinated with PostgreSQL or combined with its write-ahead log archive so the recovery point is valid.
-
-<!-- VERIFY: Confirm that Ghaymah Block Storage supports snapshots, including snapshot consistency behavior, retention, encryption, restore procedure, and cross-region or cross-zone availability. -->
+Crash-consistent or application-consistent volume snapshots can provide a backup building block, but database-aware backups and restore tests are still required. A snapshot should be coordinated with PostgreSQL or combined with its write-ahead log archive so the recovery point is valid. Snapshot support, retention, encryption, restore behavior, and cross-zone availability were not specified in the dashboard or public documentation reviewed for this assessment; they must be confirmed with Ghaymah before being used as the backup design.
 
 The authenticated Ghaymah dashboard displays a supported volume-size range of **50 MiB minimum to 10 GiB maximum** and allows a volume to be attached from an application's advanced deployment options. Volume sizing must account for the live dataset, indexes, temporary files, write-ahead logs, maintenance operations, expected growth, and free-space safety margin. Performance planning must account for sustained and burst IOPS, throughput, latency, queue depth, and the read/write mix. Load tests should verify database latency at expected peak traffic rather than selecting capacity from size alone.
 
-<!-- VERIFY: Confirm resize behavior, supported volume classes, IOPS/throughput limits, attachment limits, access modes, and zone-binding rules before final production sizing. -->
+The reviewed interfaces also did not publish resize behavior, volume classes, IOPS/throughput guarantees, attachment limits, access modes, or zone-binding rules. Production sizing must treat these as procurement questions for Ghaymah support and validate the answers with load and restore testing.
 
 Block Storage makes container replacement compatible with durable state, but it does not replace database replication, tested backups, point-in-time recovery, or a documented failover procedure.

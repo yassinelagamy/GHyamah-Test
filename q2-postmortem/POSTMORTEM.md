@@ -130,5 +130,4 @@ Because Ghaymah's public documentation does not establish specific monitoring, a
 
 Operational dashboards should show the current release version alongside memory utilization, limit, restart count, termination reason, health status, latency, and error rate. Alerts should route to the on-call notification channel with the workload, container, release, current memory percentage, restart count, and a link to the OOM runbook.
 
-<!-- VERIFY: Confirm whether Ghaymah provides native container runtime metrics/events, configurable dashboards, alert rules, and notification-channel integrations. If not, export runtime signals to an external monitoring system and use an external /health probe. -->
-
+The authenticated application page reviewed for this assessment exposes deployment status and application logs, but no documented configurable memory/restart alert controls were established. The implementation should therefore export container runtime metrics and events to an external monitoring system and retain an external `/health` probe unless Ghaymah support enables equivalent account-level controls.

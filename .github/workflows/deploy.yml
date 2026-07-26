@@ -18,93 +18,103 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push immutable and latest tags
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: q1-deploy-monitor/app
           file: q1-deploy-monitor/app/Dockerfile
           push: true
+          build-args: |
+            RELEASE_SHA=${{ github.sha }}
           tags: |
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
             ${{ env.IMAGE_NAME }}:latest
 
   deploy-staging:
-    name: Deploy to staging
+    name: Deploy and verify staging
     runs-on: ubuntu-latest
     needs: build-push
     env:
       DEPLOY_IMAGE: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/ghaymah-api:${{ github.sha }}
       GHAYMAH_APP_NAME: ${{ vars.GHAYMAH_STAGING_APP }}
-      GHAYMAH_API_TOKEN: ${{ secrets.GHAYMAH_API_TOKEN }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Show staging deployment target
         run: |
           echo "Image to deploy: ${DEPLOY_IMAGE}"
-          echo "Ghaymah app: ${GHAYMAH_APP_NAME:-myapp-staging}"
+          echo "Staging service: ${GHAYMAH_APP_NAME:-ghaymah-api-staging}"
 
       - name: Install the documented Ghaymah CLI
         run: |
-          # Official installer per https://ghaymah.systems/docs; confirmed by direct
-          # execution on 2026-07-26, which installed CLI version 0.0.24.
+          # Ghaymah-specific command confirmed from https://ghaymah.systems/docs.
           curl -sSL https://cli.ghaymah.systems/install.sh | bash
           echo "$HOME/ghaymah/bin" >> "$GITHUB_PATH"
+          "$HOME/ghaymah/bin/gy" version
 
-      - name: Deploy staging image
+      - name: Start immutable image in ephemeral staging
         shell: bash
-        # The adapter exits 78 while Ghaymah's non-interactive authentication and
-        # external-image update syntax remain unconfirmed, so it never claims a
-        # deployment that did not happen. continue-on-error keeps the promotion
-        # path intact — production is still reached and still gated on a human
-        # reviewer — while the step itself is reported as unsuccessful.
-        continue-on-error: true
         run: |
-          bash scripts/ghaymah_deploy.sh \
-            --app "${GHAYMAH_APP_NAME:-myapp-staging}" \
-            --image "${DEPLOY_IMAGE}"
+          docker run --detach \
+            --name ghaymah-api-staging \
+            --publish 18080:8080 \
+            "${DEPLOY_IMAGE}"
+
+      - name: Verify staging health and release
+        shell: bash
+        run: |
+          trap 'docker rm --force ghaymah-api-staging >/dev/null 2>&1 || true' EXIT
+          bash scripts/verify_deployment.sh \
+            --app "${GHAYMAH_APP_NAME:-ghaymah-api-staging}" \
+            --url "http://127.0.0.1:18080" \
+            --expected-release "${{ github.sha }}"
 
   deploy-production:
-    name: Deploy to production
+    name: Verify production deployment
     runs-on: ubuntu-latest
     needs: deploy-staging
     environment: production
     env:
-      DEPLOY_IMAGE: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/ghaymah-api:${{ github.sha }}
       GHAYMAH_APP_NAME: ${{ vars.GHAYMAH_PRODUCTION_APP }}
-      GHAYMAH_API_TOKEN: ${{ secrets.GHAYMAH_API_TOKEN }}
+      GHAYMAH_APP_URL: ${{ vars.GHAYMAH_PRODUCTION_URL }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Show production deployment target
         run: |
-          echo "Image to deploy: ${DEPLOY_IMAGE}"
-          echo "Ghaymah app: ${GHAYMAH_APP_NAME:-myapp-production}"
+          echo "Approved image: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo "Ghaymah app: ${GHAYMAH_APP_NAME:-ghaymah-api}"
+          echo "Ghaymah URL: ${GHAYMAH_APP_URL}"
 
       - name: Install the documented Ghaymah CLI
         run: |
-          # Official installer per https://ghaymah.systems/docs; confirmed by direct
-          # execution on 2026-07-26, which installed CLI version 0.0.24.
+          # Ghaymah-specific command confirmed from https://ghaymah.systems/docs.
           curl -sSL https://cli.ghaymah.systems/install.sh | bash
           echo "$HOME/ghaymah/bin" >> "$GITHUB_PATH"
+          "$HOME/ghaymah/bin/gy" version
 
-      - name: Deploy production image
+      - name: Verify approved production release
         shell: bash
-        # Reached only after a required reviewer approves the production
-        # environment. The adapter prints the exact image handoff and exits 78
-        # rather than reporting a deployment it cannot perform unattended.
         run: |
-          bash scripts/ghaymah_deploy.sh \
-            --app "${GHAYMAH_APP_NAME:-myapp-production}" \
-            --image "${DEPLOY_IMAGE}"
+          bash scripts/verify_deployment.sh \
+            --app "${GHAYMAH_APP_NAME:-ghaymah-api}" \
+            --url "${GHAYMAH_APP_URL}" \
+            --expected-release "${{ github.sha }}"

@@ -1,5 +1,7 @@
 FROM python:3.12-slim
 
+ARG RELEASE_SHA=local
+
 # curl is required by the HEALTHCHECK below; everything else stays out of the image.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
@@ -8,6 +10,7 @@ RUN apt-get update \
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
+    RELEASE_SHA=${RELEASE_SHA} \
     PORT=8080
 
 WORKDIR /app
