@@ -18,10 +18,10 @@ Q3 specifically requires GitHub Actions and a GitHub `production` Environment.
 GitHub is therefore retained as the public CI execution and evidence backend:
 
 - Source/CI mirror: <https://github.com/yassinelagamy/GHyamah-Test>
-- Successful protected workflow:
-  <https://github.com/yassinelagamy/GHyamah-Test/actions/runs/30215537509>
-- The successful run contains three passing jobs: build and push, staging
-  verification, and production verification.
+- Protected deployment workflow:
+  <https://github.com/yassinelagamy/GHyamah-Test/actions/workflows/deploy.yml>
+- The workflow contains three jobs: build and push, staging verification,
+  and production verification.
 - The `production` Environment requires reviewer `yassinelagamy`.
 
 ## Submission readiness
@@ -59,8 +59,8 @@ Both application endpoints returned HTTP 200 in a fresh check at
 - Docker Hub dashboard image: `docker.io/agamy74/mithal-monitor`
 - Submission repository: <https://app.gitpasha.com/agamy74/GHyamah-Test>
 - Public source/CI mirror: <https://github.com/yassinelagamy/GHyamah-Test>
-- Successful protected deployment run:
-  <https://github.com/yassinelagamy/GHyamah-Test/actions/runs/30215537509>
+- Protected deployment workflow:
+  <https://github.com/yassinelagamy/GHyamah-Test/actions/workflows/deploy.yml>
 
 ## Deployment evidence
 
